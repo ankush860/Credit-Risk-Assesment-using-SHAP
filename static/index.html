@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Credit risk assessment</title>
+  <meta name="description" content="Estimate an applicant's probability of default with a machine learning credit risk model.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232B44D6'/%3E%3Cpath d='M7 21a9 9 0 0118 0' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M16 21l4-7' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Credit risk assessment home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="currentColor"/>
+          <path d="M7 21a9 9 0 0118 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M16 21l4-7" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-name">Credit risk assessment</span>
+      </a>
+      <div class="status" id="status" data-state="checking" role="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="status-text">Checking model</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- ============ Application form ============ -->
+    <section class="intake" aria-labelledby="page-title">
+      <div class="intro">
+        <h1 id="page-title">Review a loan application</h1>
+        <p>Enter the applicant's details and the model returns a probability of default and a risk decision.</p>
+        <div class="samples">
+          <button type="button" class="btn-link" data-sample="low">Fill a low-risk example</button>
+          <button type="button" class="btn-link" data-sample="high">Fill a high-risk example</button>
+        </div>
+      </div>
+
+      <form id="loan-form" class="sheet" novalidate autocomplete="off">
+
+        <fieldset class="group">
+          <legend>Applicant</legend>
+          <div class="grid">
+
+            <div class="field" data-field="person_age">
+              <label class="label" for="person_age">Age</label>
+              <div class="control">
+                <input id="person_age" name="person_age" type="number" inputmode="numeric" step="1" placeholder="28">
+                <span class="suffix">years</span>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field" data-field="person_income">
+              <label class="label" for="person_income">Annual income</label>
+              <div class="control">
+                <span class="prefix">$</span>
+                <input id="person_income" name="person_income" type="number" inputmode="decimal" step="any" placeholder="65000">
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field span-2" data-field="person_home_ownership">
+              <span class="label" id="lbl-home">Home ownership</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="lbl-home">
+                <label><input type="radio" name="person_home_ownership" value="RENT"><span>Rent</span></label>
+                <label><input type="radio" name="person_home_ownership" value="MORTGAGE"><span>Mortgage</span></label>
+                <label><input type="radio" name="person_home_ownership" value="OWN"><span>Own</span></label>
+                <label><input type="radio" name="person_home_ownership" value="OTHER"><span>Other</span></label>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field" data-field="person_emp_length">
+              <label class="label" for="person_emp_length">Employment length</label>
+              <div class="control">
+                <input id="person_emp_length" name="person_emp_length" type="number" inputmode="decimal" step="any" placeholder="5">
+                <span class="suffix">years</span>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>Loan request</legend>
+          <div class="grid">
+
+            <div class="field span-2" data-field="loan_intent">
+              <span class="label" id="lbl-intent">Purpose</span>
+              <div class="chips" role="radiogroup" aria-labelledby="lbl-intent">
+                <label><input type="radio" name="loan_intent" value="PERSONAL"><span>Personal</span></label>
+                <label><input type="radio" name="loan_intent" value="EDUCATION"><span>Education</span></label>
+                <label><input type="radio" name="loan_intent" value="MEDICAL"><span>Medical</span></label>
+                <label><input type="radio" name="loan_intent" value="VENTURE"><span>Venture</span></label>
+                <label><input type="radio" name="loan_intent" value="HOMEIMPROVEMENT"><span>Home improvement</span></label>
+                <label><input type="radio" name="loan_intent" value="DEBTCONSOLIDATION"><span>Debt consolidation</span></label>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field span-2" data-field="loan_grade">
+              <span class="label" id="lbl-grade">Loan grade</span>
+              <div class="grades" role="radiogroup" aria-labelledby="lbl-grade">
+                <label><input type="radio" name="loan_grade" value="A"><span>A</span></label>
+                <label><input type="radio" name="loan_grade" value="B"><span>B</span></label>
+                <label><input type="radio" name="loan_grade" value="C"><span>C</span></label>
+                <label><input type="radio" name="loan_grade" value="D"><span>D</span></label>
+                <label><input type="radio" name="loan_grade" value="E"><span>E</span></label>
+                <label><input type="radio" name="loan_grade" value="F"><span>F</span></label>
+                <label><input type="radio" name="loan_grade" value="G"><span>G</span></label>
+              </div>
+              <div class="scale-note"><span>Strongest</span><span>Weakest</span></div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field" data-field="loan_amnt">
+              <label class="label" for="loan_amnt">Loan amount</label>
+              <div class="control">
+                <span class="prefix">$</span>
+                <input id="loan_amnt" name="loan_amnt" type="number" inputmode="decimal" step="any" placeholder="5000">
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field" data-field="loan_int_rate">
+              <label class="label" for="loan_int_rate">Interest rate</label>
+              <div class="control">
+                <input id="loan_int_rate" name="loan_int_rate" type="number" inputmode="decimal" step="any" placeholder="7.5">
+                <span class="suffix">% a year</span>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field span-2 ratio" data-field="loan_percent_income">
+              <div class="ratio-head">
+                <span class="label">Loan as share of income</span>
+                <output id="ratio-value" for="loan_amnt person_income">Not calculated yet</output>
+              </div>
+              <div class="ratio-track" aria-hidden="true"><span id="ratio-fill"></span></div>
+              <p class="hint">Calculated from the loan amount and annual income.</p>
+            </div>
+
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>Credit history</legend>
+          <div class="grid">
+
+            <div class="field span-2" data-field="cb_person_default_on_file">
+              <span class="label" id="lbl-default">Previous default on file</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="lbl-default">
+                <label><input type="radio" name="cb_person_default_on_file" value="N"><span>No default</span></label>
+                <label><input type="radio" name="cb_person_default_on_file" value="Y"><span>Has defaulted</span></label>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+            <div class="field" data-field="cb_person_cred_hist_length">
+              <label class="label" for="cb_person_cred_hist_length">Credit history length</label>
+              <div class="control">
+                <input id="cb_person_cred_hist_length" name="cb_person_cred_hist_length" type="number" inputmode="numeric" step="1" placeholder="6">
+                <span class="suffix">years</span>
+              </div>
+              <p class="error" aria-live="polite"></p>
+            </div>
+
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary" id="submit-btn">
+            <span class="btn-label">Assess risk</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn-ghost" id="reset-btn">Clear form</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ Result panel ============ -->
+    <aside class="verdict" id="verdict" data-state="idle" aria-label="Risk assessment result">
+      <h2>Risk assessment</h2>
+
+      <div class="gauge-wrap">
+        <svg id="gauge" viewBox="0 0 320 190" role="img" aria-label="Gauge showing probability of default against the decision cutoff">
+          <path id="zone-low" class="zone low" pathLength="1"/>
+          <path id="zone-high" class="zone high" pathLength="1"/>
+          <line id="cutoff-tick" class="cutoff-tick"/>
+          <text id="cutoff-label" class="gauge-text"></text>
+          <text class="gauge-text end" x="56" y="184" text-anchor="middle">0%</text>
+          <text class="gauge-text end" x="264" y="184" text-anchor="middle">100%</text>
+          <g id="needle" class="needle">
+            <polygon points="156.5,160 160,62 163.5,160"/>
+          </g>
+          <circle class="hub" cx="160" cy="160" r="10"/>
+          <circle class="hub-core" cx="160" cy="160" r="3.5"/>
+        </svg>
+      </div>
+
+      <div class="readout">
+        <output id="prob" class="prob">--</output>
+        <span class="readout-label">probability of default</span>
+      </div>
+
+      <div class="decision" id="decision">
+        <svg class="icon icon-low" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="icon icon-high" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3L12 4zM12 10v4.5M12 17.2v.1" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="decision-text">Waiting for an application</span>
+      </div>
+
+      <p class="explain" id="explain" aria-live="polite">Complete the form and select Assess risk. The needle shows where this applicant sits against the model's cutoff.</p>
+
+      <dl class="facts" id="facts" hidden>
+        <div><dt>Decision cutoff</dt><dd id="fact-cutoff">--</dd></div>
+        <div><dt>Distance from cutoff</dt><dd id="fact-margin">--</dd></div>
+        <div><dt>Loan as share of income</dt><dd id="fact-ratio">--</dd></div>
+      </dl>
+
+      <section class="history" id="history-wrap" hidden>
+        <h3>This session</h3>
+        <ol id="history"></ol>
+      </section>
+    </aside>
+
+  </main>
+
+  <footer class="footer">
+    <p>Model output is a statistical estimate and should support, not replace, a credit officer's judgement.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
